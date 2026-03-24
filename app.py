@@ -1,64 +1,29 @@
 import streamlit as st
+import plotly.express as px
 import pandas as pd
-import matplotlib.pyplot as plt
 
-# Page config
-st.set_page_config(page_title="World Cup Dashboard", layout="wide")
+# Sample World Cup data (you can replace this with your CSV)
+data = pd.DataFrame({
+    'Team': ['Brazil', 'Germany', 'Argentina', 'France', 'Spain'],
+    'Goals': [12, 9, 7, 8, 6]
+})
 
-# Title
-st.markdown("<h1 style='text-align: center; color: #4CAF50;'>⚽ World Cup Interactive Dashboard</h1>", unsafe_allow_html=True)
+# Custom colors for each team
+colors = ['#FFD700', '#FF5733', '#33FF57', '#3357FF', '#FF33A8']
 
-# Upload or use default dataset
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+# Create pie chart
+fig = px.pie(
+    data, 
+    names='Team', 
+    values='Goals', 
+    title='World Cup Goals by Team',
+    color='Team',
+    color_discrete_sequence=colors
+)
 
-if uploaded_file:
-    try:
-        df = pd.read_csv(uploaded_file, encoding='utf-8')
-    except:
-        df = pd.read_csv(uploaded_file, encoding='latin1')
-else:
-    df = pd.read_csv("world_cup_data.csv")
+# Add some styling
+fig.update_traces(textposition='inside', textinfo='percent+label', pull=[0.05, 0, 0, 0, 0])
 
-# Sidebar filters
-st.sidebar.header("🔍 Filters")
+# Display in Streamlit
+st.plotly_chart(fig)
 
-if "Year" in df.columns:
-    year = st.sidebar.selectbox("Select Year", df["Year"].unique())
-    df = df[df["Year"] == year]
-
-# KPIs
-st.subheader("📊 Key Metrics")
-
-col1, col2, col3 = st.columns(3)
-
-if "Goals_Scored" in df.columns:
-    col1.metric("Total Goals", int(df["Goals_Scored"].sum()))
-
-if "Matches_Played" in df.columns:
-    col2.metric("Matches Played", int(df["Matches_Played"].sum()))
-
-if "Winner" in df.columns:
-    col3.metric("Winner", df["Winner"].iloc[0])
-
-# Data preview
-st.subheader("📄 Dataset Preview")
-st.dataframe(df)
-
-# Visualization
-st.subheader("📈 Visualization")
-
-column = st.selectbox("Choose column", df.columns)
-
-fig, ax = plt.subplots()
-
-if pd.api.types.is_numeric_dtype(df[column]):
-    df[column].plot(kind='bar', ax=ax)
-else:
-    df[column].value_counts().plot(kind='bar', ax=ax)
-
-ax.set_title(f"{column} Analysis", color="green")
-st.pyplot(fig)
-
-# Footer
-st.markdown("---")
-st.markdown("<p style='text-align: center;'>Built with ❤️ using Streamlit</p>", unsafe_allow_html=True)
